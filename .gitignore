@@ -1,0 +1,30 @@
+# Blender autosaves and temp files
+*.blend1
+*.blend2
+*.blend@
+*.swp
+*.lock
+
+# OS metadata
+.DS_Store
+Thumbs.db
+
+# Renders (stills and loops can be tracked via Git LFS if committed, or kept local)
+renders/stills/*.png
+renders/stills/*.exr
+renders/loops/*.mp4
+renders/loops/*.webm
+renders/loops/*.mov
+!renders/stills/.gitkeep
+!renders/loops/.gitkeep
+
+# Large raw extracted archive files
+*.zip
+*.rar
+*.7z
+*.tar.gz
+
+# Cache
+__pycache__/
+*.pyc
+.cache/
