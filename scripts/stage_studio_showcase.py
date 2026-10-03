@@ -283,11 +283,44 @@ def add_floating_particles(scene, count=35):
     return motes
 
 def keyframe_seamless_loop(scene, root_raiden, root_hutao, cam_obj, motes, total_frames=120):
-    """Sets up 60 FPS, 120-frame (2.0s) mathematically seamless micro-motion loop."""
+    """Sets up 60 FPS, 120-frame (2.0s) seamless live wallpaper loop with full character actions:
+    Hu Tao waving her hand with bouncing pigtails & head tilt;
+    Raiden Shogun in a poised regal stance with gaze shift, wind-rippling braid, and sleeve flutter.
+    """
     scene.frame_start = 1
     scene.frame_end = total_frames
     scene.render.fps = 60
     
+    # Locate character armatures
+    arm_raiden = next((o for o in bpy.data.objects if o.type == 'ARMATURE' and 'shougun' in o.name.lower()), None)
+    arm_hutao = next((o for o in bpy.data.objects if o.type == 'ARMATURE' and 'hutao' in o.name.lower()), None)
+    
+    # Configure XYZ rotation mode on all animated pose bones
+    if arm_hutao:
+        h_bones = [
+            "Bip001 R UpperArm", "Bip001 R Forearm", "Bip001 R Hand",
+            "Bip001 Head", "Bip001 Spine1",
+            "+HairS L I01", "+HairS L I02", "+HairS L I03", "+HairS L I04", "+HairS L I05",
+            "+HairS R I01", "+HairS R I02", "+HairS R I03", "+HairS R I04", "+HairS R I05"
+        ]
+        for bname in h_bones:
+            pb = arm_hutao.pose.bones.get(bname)
+            if pb:
+                pb.rotation_mode = 'XYZ'
+                
+    if arm_raiden:
+        r_bones = [
+            "Bip001 R UpperArm", "Bip001 R Forearm", "Bip001 R Hand",
+            "Bip001 L UpperArm", "Bip001 L Forearm", "Bip001 L Hand",
+            "Bip001 Head", "Bip001 Spine1",
+            "+HairB L B01", "+HairB L B02", "+HairB L B03", "+HairB L B04", "+HairB L B05", "+HairB L B06",
+            "+SleeveB R A31", "+SleeveB R A32", "+SleeveB L A21", "+SleeveB L A22"
+        ]
+        for bname in r_bones:
+            pb = arm_raiden.pose.bones.get(bname)
+            if pb:
+                pb.rotation_mode = 'XYZ'
+
     raiden_base_z = root_raiden.location.z
     hutao_base_z = root_hutao.location.z
     cam_base_x = cam_obj.location.x
@@ -298,20 +331,126 @@ def keyframe_seamless_loop(scene, root_raiden, root_hutao, cam_obj, motes, total
         phase = (f - 1) / total_frames
         angle = phase * 2.0 * math.pi
         
-        # 1. Raiden Breathing (Gentle sinusoidal vertical rise)
-        root_raiden.location.z = raiden_base_z + math.sin(angle) * 0.005
+        # 1. ROOT BREATHING OSCILLATION
+        root_raiden.location.z = raiden_base_z + math.sin(angle) * 0.004
         root_raiden.keyframe_insert(data_path="location", frame=f)
         
-        # 2. Hu Tao Breathing (Offset phase by 120 deg for organic rhythm)
-        root_hutao.location.z = hutao_base_z + math.sin(angle + (2.0 * math.pi / 3.0)) * 0.006
+        root_hutao.location.z = hutao_base_z + math.sin(angle + (2.0 * math.pi / 3.0)) * 0.005
         root_hutao.keyframe_insert(data_path="location", frame=f)
         
-        # 3. Camera Cinematic Micro-Float (Subtle figure-8 sway)
-        cam_obj.location.x = cam_base_x + math.sin(angle) * 0.012
-        cam_obj.location.z = cam_base_z + math.sin(2.0 * angle) * 0.005
+        # 2. HU TAO: ENERGETIC ANIME HAND WAVE & GREETING ACTION
+        if arm_hutao:
+            # Wave frequency: 2 complete waves per 2.0s loop
+            wave_angle = angle * 2.0
+            
+            # Right Upper Arm: Raised up into waving posture
+            pb_u = arm_hutao.pose.bones.get("Bip001 R UpperArm")
+            if pb_u:
+                pb_u.rotation_euler = (
+                    math.radians(-42.0 + math.sin(wave_angle) * 2.5),
+                    math.radians(-28.0),
+                    math.radians(-75.0 + math.cos(wave_angle) * 2.0)
+                )
+                pb_u.keyframe_insert(data_path="rotation_euler", frame=f)
+                
+            # Right Forearm: Bends up towards head and rocks side to side
+            pb_f = arm_hutao.pose.bones.get("Bip001 R Forearm")
+            if pb_f:
+                pb_f.rotation_euler = (
+                    math.radians(-20.0),
+                    math.radians(58.0 + math.sin(wave_angle) * 10.0),
+                    math.radians(math.cos(wave_angle) * 5.0)
+                )
+                pb_f.keyframe_insert(data_path="rotation_euler", frame=f)
+                
+            # Right Hand: Lively side-to-side hand waving motion
+            pb_h = arm_hutao.pose.bones.get("Bip001 R Hand")
+            if pb_h:
+                pb_h.rotation_euler = (
+                    math.radians(12.0 + math.sin(wave_angle) * 6.0),
+                    math.radians(math.cos(wave_angle) * 8.0),
+                    math.radians(25.0 + math.sin(wave_angle) * 28.0) # Prominent wave rotation!
+                )
+                pb_h.keyframe_insert(data_path="rotation_euler", frame=f)
+                
+            # Head: Cheerful tilt and nod
+            pb_hd = arm_hutao.pose.bones.get("Bip001 Head")
+            if pb_hd:
+                pb_hd.rotation_euler = (
+                    math.radians(6.0 + math.sin(wave_angle) * 2.5),
+                    math.radians(-10.0 + math.cos(angle) * 3.5),
+                    math.radians(-8.0 + math.sin(angle) * 3.0)
+                )
+                pb_hd.keyframe_insert(data_path="rotation_euler", frame=f)
+                
+            # Pigtails: Dynamic secondary hair bounce & flutter
+            for i in range(1, 6):
+                lag = i * 0.35
+                sway = math.sin(wave_angle - lag) * (0.04 * i)
+                p_left = arm_hutao.pose.bones.get(f"+HairS L I0{i}")
+                p_right = arm_hutao.pose.bones.get(f"+HairS R I0{i}")
+                if p_left:
+                    p_left.rotation_euler = (sway, 0.0, sway * 0.5)
+                    p_left.keyframe_insert(data_path="rotation_euler", frame=f)
+                if p_right:
+                    p_right.rotation_euler = (sway, 0.0, -sway * 0.5)
+                    p_right.keyframe_insert(data_path="rotation_euler", frame=f)
+
+        # 3. RAIDEN SHOGUN: REGAL ARCHON STANCE, GAZE SHIFT & BRAID WIND WAVE
+        if arm_raiden:
+            # Right Arm: Lowered naturally along right hip with gentle breathing sway
+            pb_ru = arm_raiden.pose.bones.get("Bip001 R UpperArm")
+            if pb_ru:
+                pb_ru.rotation_euler = (
+                    math.radians(-55.0 + math.sin(angle) * 1.5),
+                    math.radians(10.0),
+                    math.radians(25.0 + math.cos(angle) * 1.0)
+                )
+                pb_ru.keyframe_insert(data_path="rotation_euler", frame=f)
+                
+            # Left Arm: Lowered naturally along left hip with gentle breathing sway
+            pb_lu = arm_raiden.pose.bones.get("Bip001 L UpperArm")
+            if pb_lu:
+                pb_lu.rotation_euler = (
+                    math.radians(55.0 - math.sin(angle) * 1.5),
+                    math.radians(-10.0),
+                    math.radians(-25.0 - math.cos(angle) * 1.0)
+                )
+                pb_lu.keyframe_insert(data_path="rotation_euler", frame=f)
+                
+            # Head: Elegant regal head turn acknowledging Hu Tao and viewer
+            pb_rh = arm_raiden.pose.bones.get("Bip001 Head")
+            if pb_rh:
+                pb_rh.rotation_euler = (
+                    math.radians(3.0 + math.sin(angle) * 1.5),
+                    math.radians(math.sin(angle) * 5.0), # Gentle gaze turn
+                    math.radians(-3.0)
+                )
+                pb_rh.keyframe_insert(data_path="rotation_euler", frame=f)
+                
+            # Long Purple Braid: Cascading harmonic wind ripple across all 6 bones
+            for i in range(1, 7):
+                lag = i * 0.45
+                sway_x = math.sin(angle - lag) * (0.05 * i)
+                sway_y = math.cos(angle - lag) * (0.03 * i)
+                pb_braid = arm_raiden.pose.bones.get(f"+HairB L B0{i}")
+                if pb_braid:
+                    pb_braid.rotation_euler = (sway_x, sway_y, 0.0)
+                    pb_braid.keyframe_insert(data_path="rotation_euler", frame=f)
+                    
+            # Kimono Sleeves: Soft atmospheric breeze flutter
+            for s_name in ["+SleeveB R A31", "+SleeveB R A32", "+SleeveB L A21", "+SleeveB L A22"]:
+                pb_sleeve = arm_raiden.pose.bones.get(s_name)
+                if pb_sleeve:
+                    pb_sleeve.rotation_euler = (math.sin(angle * 1.5) * 0.03, 0.0, math.cos(angle * 1.5) * 0.02)
+                    pb_sleeve.keyframe_insert(data_path="rotation_euler", frame=f)
+
+        # 4. CAMERA CINEMATIC MICRO-FLOAT
+        cam_obj.location.x = cam_base_x + math.sin(angle) * 0.010
+        cam_obj.location.z = cam_base_z + math.sin(2.0 * angle) * 0.004
         cam_obj.keyframe_insert(data_path="location", frame=f)
         
-        # Floating Motes (Cyclic vertical float that wraps perfectly)
+        # 5. FLOATING SPIRIT PARTICLES
         for mote, ox, oy, oz, speed in motes:
             mote.location.z = oz + math.sin(angle + ox * 3.0) * speed * 0.1
             mote.location.x = ox + math.cos(angle + oy * 2.0) * 0.02
